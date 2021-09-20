@@ -8,5 +8,7 @@ if __name__ == '__main__':
             if arguments_str == "/exit":
                 print("Bye!")
                 exit()
+            elif arguments_str == "/help":
+                print("The program calculates the sum of numbers")
             else:
                 print("Argumets must be integers!")
