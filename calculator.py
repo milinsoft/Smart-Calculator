@@ -1,15 +1,12 @@
-# write your code here
-a, b = input().split()
-
-
-def summarize(arg1, arg2):
-    try:
-        sum_result = int(arg1) + int(arg2)
-    except ValueError:
-        print("Argumets must be integers!")
-    return sum_result
-        
-
 if __name__ == '__main__':
-    print(summarize(a, b))
-    
+    while True:
+        arguments_str = input()
+        try:
+            arguments_list = [int(x) for x in arguments_str.split()]
+            print(sum(arguments_list)) if len(arguments_str) > 0 else ""
+        except ValueError:
+            if arguments_str == "/exit":
+                print("Bye!")
+                exit()
+            else:
+                print("Argumets must be integers!")
