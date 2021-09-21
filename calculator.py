@@ -5,13 +5,10 @@ def transform_expression(string) -> str:
     """Removing spaces"""
     string = "".join(string.split())
 
-    if not re.match(r"[\w+\-]+$", string):
-        """ add * and devisors"""
-        """ add check that operators are not 1st and lst"""
-        print("Invalid expression")
-    elif len(string) == 1:
+    """single argument case"""
+    if re.search(r"[-+]?\d+$", string):
         return string
-    else:
+    elif re.search(r"(([-+]?\d+)[-|\+|\*|\/](\d+$))", string):
         args = []
         for arg in string:
             if re.match(r"[-]", arg):
@@ -20,7 +17,22 @@ def transform_expression(string) -> str:
                 args.append("+")
             else:
                 args.append(arg)
-        return "".join(args)
+        args = "".join(args)
+        return args
+    else:
+        print("Invalid expression")
+
+
+
+def handle_command(command):
+    if command == "/exit":
+        print("Bye!")
+        exit()
+    elif command == "/help":
+        print("The program calculates a given expression")
+    else:
+        print("Unknown command")
+
 
 
 def compute_expression(math_expression):
@@ -32,15 +44,14 @@ def compute_expression(math_expression):
 if __name__ == '__main__':
     while True:
         arguments_str = input()
-        if arguments_str == "/exit":
-            print("Bye!")
-            exit()
-        elif arguments_str == "/help":
-            print("The program calculates a given expression")
+        if arguments_str.startswith("/"):
+            handle_command(arguments_str)
         elif len(arguments_str) == 0:
             continue
         else:
-            expression = transform_expression(arguments_str)
-            print(eval(expression))  # this is a great build-in method to calculate the expression, but I need to try implement mine
-            #compute_expression(expression)
-
+            if not arguments_str[-1].isnumeric():
+                print("Invalid expression")
+            else:
+                expression = transform_expression(arguments_str)
+                print(eval(expression))  # this is a great build-in method to calculate the expression, but I need to try implement mine
+                #compute_expression(expression)
