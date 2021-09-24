@@ -103,7 +103,7 @@ if __name__ == '__main__':
                 expression_list = transform_into_expression(arguments_str)
                 #print(eval(expression))  # this is a great build-in method to calculate the expression, but I need to try implement mine
                 if len(expression_list) == 1:
-                    print(expression_list[0])
+                    print(expression_list[0].strip("+"))
                 else:
                     expression_list = deque(expression_list)
                     result = compute_expression(expression_list)
