@@ -19,13 +19,11 @@ def transform_into_expression(string) -> list:
                     str_as_lst[arg] = "+"
         return str_as_lst
 
+        """single argument case (NEED TO RE-WRITE) or even remove"""
 
 
-        """single argument case (NEED TO RE-WRITE)"""
-    elif re.search(r"[-+]?\d+$", string):
-        return str_as_lst
-            #print(str_as_lst)
-
+    #elif re.search(r"[-+]?\d+$", string):
+    #    return str_as_lst
 
 
     else:
@@ -87,25 +85,93 @@ def compute_expression(math_expression):
         return compute_expression(math_expression)
 
 
+def var_handler(arguments_str, variables):
+    expr_template = re.compile(r"(\A\w+(\s*[-\+*/]\s*\w+)+$)")
+    """Print variable value scenario"""
+    if re.match(r"\a[a-z]+$", arguments_str, flags=re.IGNORECASE):
+        if arguments_str in variables.keys():
+            print(variables[arguments_str])
+        else:
+            print("Unknown variable")
+
+    elif re.search("=", arguments_str):
+        var_assignment(arguments_str, variables)
+
+    elif re.match(expr_template, arguments_str):
+        expression_list = var_operations(arguments_str)
+        expression_list = deque(expression_list)
+        return expression_list
+
+
+def var_assignment(arguments_str, variables):
+    var_ass_template = re.compile(r"\A[a-z]+\s*=\s*\d+$", flags=re.IGNORECASE)
+    if re.match(var_ass_template, arguments_str):
+        """ scenario for var = int/float only """
+        var, val = re.split(r"\s*=\s*", arguments_str)
+        if val.isnumeric():
+            variables[var] = val
+        else:
+            """reassignment"""
+            if val in variables.keys():
+                variables[var] = val
+            else:
+                print("Unknown variable")
+
+    else:
+        print("Invalid assignment")
+
+
+
+def var_operations(arguments_str) -> list:
+    var_list = re.findall(r"[a-z]+", arguments_str, flags=re.IGNORECASE)
+    issue_counter = 0
+    for v in var_list:
+        if v not in variables.keys():
+            issue_counter += 1
+        if issue_counter != 0:
+            print("Unknown variable")
+        else:
+            arguments_lst = arguments_str.split(" ")
+            for vl in var_list:
+                for i in range(len(arguments_str)):
+                    if arguments_lst[i] == v and vl in variables.keys():
+                        arguments_lst[i] = variables[vl]
+            return arguments_lst
+
+
 if __name__ == '__main__':
+    variables = dict()
     while True:
         arguments_str = input()
         #arguments_str = "100 +++++ 1 -- 10 --- 2 * 10"
-        if arguments_str.startswith("/"):
-            handle_command(arguments_str)
-        elif len(arguments_str) == 0:
+        if len(arguments_str) == 0:
             continue
-        else:
-            if not arguments_str[-1].isnumeric():
-                print("Invalid expression")
+        elif arguments_str.startswith("/"):
+            handle_command(arguments_str)
+        elif arguments_str[-1] in {"+", "-", "/", "*"}:
+            print("Invalid expression")
+        elif arguments_str[0].isalpha():
+            expression_list = var_handler(arguments_str, variables)
+            """ if there is an assignment here, expression_list will have no value
+            need to fix removing assigning stucture here"""
 
+            if len(expression_list) == 1:
+                print(expression_list[0].lstrip("+"))
             else:
-                expression_list = transform_into_expression(arguments_str)
-                #print(eval(expression))  # this is a great build-in method to calculate the expression, but I need to try implement mine
-                if len(expression_list) == 1:
-                    print(expression_list[0].strip("+"))
-                else:
-                    expression_list = deque(expression_list)
-                    result = compute_expression(expression_list)
-                    print(result)
+                expression_list = deque(expression_list)
+                result = compute_expression(expression_list)
+                print(result)
+        else:
+            expression_list = transform_into_expression(arguments_str)
+            #print(eval(expression))  # this is a great build-in method to calculate the expression, but I need to try implement mine
+            if len(expression_list) == 1:
+                print(expression_list[0].lstrip("+"))
+            else:
+                expression_list = deque(expression_list)
+                result = compute_expression(expression_list)
+                print(result)
 
+
+
+
+# test with input like just 1 positive number
