@@ -24,8 +24,9 @@ def transform_into_expression(string) -> list:
         """single argument case (NEED TO RE-WRITE) or even remove"""
 
 
-    #elif re.search(r"[-+]?\d+$", string):
-    #    return str_as_lst
+    elif re.search(r"\A\s*[-+]?\d+\+?$", string):
+        str_as_lst = string.split()
+        return str_as_lst
 
 
     else:
@@ -85,7 +86,8 @@ def compute_expression(math_expression):
         return compute_expression(math_expression)
 
 
-def var_handler(arguments_str, variables):
+def var_handler(arguments_str, variables=dict()):
+    # variables made default argument to make sure it's not reset every time function is called.
     expr_template = re.compile(r"\A(\s*\w+\s*[-+*/]*\s*)+$")
     """Print variable value scenario"""
     if re.match(r"\A\s*[a-z]+$", arguments_str, flags=re.IGNORECASE):
@@ -95,11 +97,10 @@ def var_handler(arguments_str, variables):
             print("Unknown variable")
         """ASSIGNMENT SCENARIO"""
     elif re.search(r"=", arguments_str):
-        var_assignment(arguments_str, variables)
-
+        return var_assignment(arguments_str, variables)
         """ expression with variables """
     elif re.match(expr_template, arguments_str):
-        expression_list = var_operations(arguments_str)
+        expression_list = var_operations(arguments_str, variables)
         if expression_list != 1:
             exp_str = " ".join(expression_list)
             transformed_expr = transform_into_expression(exp_str)
@@ -111,7 +112,6 @@ def var_handler(arguments_str, variables):
 def var_assignment(arguments_str, variables):
     var_ass_template = re.compile(r"\A\s*[a-z]+\s*=\s*([a-z]+|[\d]+)\s*$", flags=re.IGNORECASE)
     if re.match(var_ass_template, arguments_str):
-
         """ scenario for var = int/float only """
         var, val = re.split(r"\s*=\s*", arguments_str.replace(" ", ""))
         var = var.strip(" ")
@@ -137,7 +137,7 @@ def var_assignment(arguments_str, variables):
 
 
 
-def var_operations(arguments_str) -> list:
+def var_operations(arguments_str, variables) -> list:
     var_list = re.findall(r"[\w]+", arguments_str, flags=re.IGNORECASE)
     issue_counter = 0
     arguments_lst = arguments_str.strip(" ").split(" ")
@@ -157,7 +157,6 @@ def var_operations(arguments_str) -> list:
         return 1
     else:
         arguments_lst = transform_into_expression(" ".join(arguments_lst))
-        #print(arguments_lst)
         return arguments_lst
 
 
@@ -172,21 +171,21 @@ def print_result(expression_list):
         print(result)
 
 
-if __name__ == '__main__':
-    variables = dict()
+
+def main():
     while True:
         arguments_str = input()
-        #arguments_str = "100 +++++ 1 -- 10 --- 2 * 10"
         if len(arguments_str) == 0:
             continue
         elif arguments_str.startswith("/"):
+            "var variables can be created here as well"
             handle_command(arguments_str)
-        elif arguments_str[-1] in {"+", "-", "/", "*"}:
+        elif arguments_str[-1] in {"-", "/", "*"}:
             print("Invalid expression")
 
 
         elif arguments_str.lstrip()[0].isalpha():
-            expr = var_handler(arguments_str, variables)
+            expr = var_handler(arguments_str)
             if expr != 1:
                 print_result(expr)
             else:
@@ -194,6 +193,13 @@ if __name__ == '__main__':
         else:
             expression_list = transform_into_expression(arguments_str)
             print_result(expression_list)
+
+
+
+
+
+if __name__ == '__main__':
+    main()
 
 
 # test with input like just 1 positive number
