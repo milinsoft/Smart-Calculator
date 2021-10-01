@@ -8,8 +8,8 @@ def transform_into_expression(string) -> list:
     """Splitting arguments and signs into the list"""
     str_as_lst = string.split(" ")
     if re.search(r"(([-+]?)\d+( ?[-+*/]+ ?\d+)+)", string):
-        """looks like this regex doesnt work with mixed expression"""
-
+        """double or more * is not allowed, replace with ^ and add single * - rewrite regex"""
+        """ this template take an expresion with already replaced variables with their values"""
         for arg in range(len(str_as_lst)):
             if str_as_lst[arg] != " ":
                 if re.match(r"[\-]+$", str_as_lst[arg]):
@@ -38,7 +38,7 @@ def prioritized_computation(math_expression):
     # the bug is that this function should work with the list, not with deque
     math_expression = list(math_expression)  # bad way to get the bug fixed as function is recursive
 
-    first_pr_operators = {"/", "*", "**"}
+    first_pr_operators = {"/", "*", "^"}
     for pr_operation in first_pr_operators:
         if pr_operation in math_expression:
             priority_index = math_expression.index(pr_operation)
@@ -47,12 +47,13 @@ def prioritized_computation(math_expression):
             arg2 = int(math_expression.pop(math_expression[priority_index - 1]))  # as sign already popped, now arg2 changed it's index
             if sign == "/":
                 operation_result = arg1 / arg2
+                math_expression.insert(priority_index - 1, str(operation_result))
             elif sign == "*":
                 operation_result = arg1 * arg2
+                math_expression.insert(priority_index - 1, str(operation_result))
             elif sign == "**":
                 operation_result = arg1 ** arg2
-
-            math_expression.insert(priority_index - 1, str(operation_result))
+                math_expression.insert(priority_index - 1, str(operation_result))
             return prioritized_computation(math_expression)
         else:
             return deque(math_expression)
@@ -92,10 +93,11 @@ def var_handler(arguments_str, variables):
         """ expression with variables """
     elif re.match(expr_template, arguments_str):
         expression_list = var_operations(arguments_str, variables)
-        exp_str = " ".join(expression_list)
-        transformed_expr = transform_into_expression(exp_str)
-        return transformed_expr
 
+        if expression_list:
+            exp_str = " ".join(expression_list)
+            transformed_expr = transform_into_expression(exp_str)
+            return transformed_expr
 
 
 def var_assignment(arguments_str, variables):
@@ -137,6 +139,7 @@ def var_operations(arguments_str, variables) -> list:
                     issue_counter += 1
     if issue_counter != 0:
         print("Unknown variable")
+        return []
     else:
         arguments_lst = transform_into_expression(" ".join(arguments_lst))
         return arguments_lst
@@ -158,8 +161,15 @@ def main():
     while True:
         arguments_str = input().strip()  # removing all extra spaces on both sides of input
         # arguments_str = "100 +++++ 1 -- 10 --- 2 * 10"
+
+
         if len(arguments_str) == 0:
             continue
+        elif re.match(r"\A[-+]?\d+$", arguments_str):
+            if arguments_str[0] == "+":
+                print(arguments_str.lstrip("+"))
+            else:
+                print(arguments_str)
         elif arguments_str.startswith("/"):
             handle_command(arguments_str)
         elif arguments_str[-1] in {"+", "-", "/", "*"}:
@@ -167,7 +177,6 @@ def main():
         elif re.search(r"[a-z]+", arguments_str, flags=re.IGNORECASE):
             expr = var_handler(arguments_str, variables)
             print_result(expr)
-
         else:
             expression_list = transform_into_expression(arguments_str)
             print_result(expression_list)
