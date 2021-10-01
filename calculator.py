@@ -7,7 +7,7 @@ from collections import deque
 def transform_into_expression(string) -> list:
     """Splitting arguments and signs into the list"""
     str_as_lst = string.split(" ")
-    if re.search(r"(([-\+]?)\d+( ?[-\+\*/]+ ?\d+)+)", string):
+    if re.search(r"(([-+]?)\d+( ?[-+*/]+ ?\d+)+)", string):
         """looks like this regex doesnt work with mixed expression"""
 
         for arg in range(len(str_as_lst)):
@@ -20,15 +20,6 @@ def transform_into_expression(string) -> list:
                 elif re.match(r"\+{2,}", str_as_lst[arg]):
                     str_as_lst[arg] = "+"
         return str_as_lst
-
-        """single argument case (NEED TO RE-WRITE) or even remove"""
-
-
-    elif re.search(r"\A\s*[-+]?\d+\+?$", string):
-        str_as_lst = string.split()
-        return str_as_lst
-
-
     else:
         print("Invalid expression")
 
@@ -44,6 +35,9 @@ def handle_command(command):
 
 
 def prioritized_computation(math_expression):
+    # the bug is that this function should work with the list, not with deque
+    math_expression = list(math_expression)  # bad way to get the bug fixed as function is recursive
+
     first_pr_operators = {"/", "*", "**"}
     for pr_operation in first_pr_operators:
         if pr_operation in math_expression:
@@ -61,14 +55,11 @@ def prioritized_computation(math_expression):
             math_expression.insert(priority_index - 1, str(operation_result))
             return prioritized_computation(math_expression)
         else:
-            return math_expression
+            return deque(math_expression)
 
-
-# potentially merge top and not top calculations later on
 
 def compute_expression(math_expression):
-    # math_expression = prioritized_computation(math_expression)  # turned of for the stage #6 as no prioritized operations for now
-    operators = {"-", "+"}
+    math_expression = prioritized_computation(math_expression)  # turned of for the stage #6 as no prioritized operations for now
     if len(math_expression) < 3:
         return "".join(math_expression)
     else:
@@ -86,8 +77,7 @@ def compute_expression(math_expression):
         return compute_expression(math_expression)
 
 
-def var_handler(arguments_str, variables=dict()):
-    # variables made default argument to make sure it's not reset every time function is called.
+def var_handler(arguments_str, variables):
     expr_template = re.compile(r"\A(\s*\w+\s*[-+*/]*\s*)+$")
     """Print variable value scenario"""
     if re.match(r"\A\s*[a-z]+$", arguments_str, flags=re.IGNORECASE):
@@ -97,44 +87,37 @@ def var_handler(arguments_str, variables=dict()):
             print("Unknown variable")
         """ASSIGNMENT SCENARIO"""
     elif re.search(r"=", arguments_str):
-        return var_assignment(arguments_str, variables)
+        var_assignment(arguments_str, variables)
+
         """ expression with variables """
     elif re.match(expr_template, arguments_str):
         expression_list = var_operations(arguments_str, variables)
-        if expression_list != 1:
-            exp_str = " ".join(expression_list)
-            transformed_expr = transform_into_expression(exp_str)
-            return transformed_expr
-        else:
-            return 1
+        exp_str = " ".join(expression_list)
+        transformed_expr = transform_into_expression(exp_str)
+        return transformed_expr
+
 
 
 def var_assignment(arguments_str, variables):
     var_ass_template = re.compile(r"\A\s*[a-z]+\s*=\s*([a-z]+|[\d]+)\s*$", flags=re.IGNORECASE)
     if re.match(var_ass_template, arguments_str):
+
         """ scenario for var = int/float only """
         var, val = re.split(r"\s*=\s*", arguments_str.replace(" ", ""))
         var = var.strip(" ")
         val = val.strip(" ")
         if val.isnumeric():
             variables[var] = val
-            return 0
         else:
             """reassignment"""
             if val in variables.keys():
                 variables[var] = variables[val]
-                return 0
             else:
                 print("Unknown variable")
-
-
     elif re.match(r"\w+", arguments_str):
         print("Invalid identifier")
-        return 1
     else:
         print("Invalid assignment")
-        return 1
-
 
 
 def var_operations(arguments_str, variables) -> list:
@@ -154,7 +137,6 @@ def var_operations(arguments_str, variables) -> list:
                     issue_counter += 1
     if issue_counter != 0:
         print("Unknown variable")
-        return 1
     else:
         arguments_lst = transform_into_expression(" ".join(arguments_lst))
         return arguments_lst
@@ -171,35 +153,25 @@ def print_result(expression_list):
         print(result)
 
 
-
 def main():
+    variables = dict()
     while True:
-        arguments_str = input()
+        arguments_str = input().strip()  # removing all extra spaces on both sides of input
+        # arguments_str = "100 +++++ 1 -- 10 --- 2 * 10"
         if len(arguments_str) == 0:
             continue
         elif arguments_str.startswith("/"):
-            "var variables can be created here as well"
             handle_command(arguments_str)
-        elif arguments_str[-1] in {"-", "/", "*"}:
+        elif arguments_str[-1] in {"+", "-", "/", "*"}:
             print("Invalid expression")
+        elif re.search(r"[a-z]+", arguments_str, flags=re.IGNORECASE):
+            expr = var_handler(arguments_str, variables)
+            print_result(expr)
 
-
-        elif arguments_str.lstrip()[0].isalpha():
-            expr = var_handler(arguments_str)
-            if expr != 1:
-                print_result(expr)
-            else:
-                continue
         else:
             expression_list = transform_into_expression(arguments_str)
             print_result(expression_list)
 
 
-
-
-
 if __name__ == '__main__':
     main()
-
-
-# test with input like just 1 positive number
