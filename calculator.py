@@ -20,19 +20,14 @@ def transform_into_expression(string, variables) -> str:
      otherwise an error message is printer"""
     if re.match(r"\A[-+]?\d+$", string):
         print(string.lstrip("+"))
-
     elif string[-1] in {"+", "-", "/", "*"}:
         print("Invalid expression")
-
     elif re.search(r"[a-z]+", string, flags=re.IGNORECASE):
         return handle_variables(string, variables)
-
     elif re.search(r"(([-+]?)\d+( ?[-+*/]+ ?\d+)+)", string):
         """ this template take an expresion with already replaced variables with their values
         double or more * is not allowed, replace with ^ and add single * - rewrite regex"""
         """Splitting arguments and signs into the list"""
-
-        # can be rewritten with .replace()
         str_as_lst = string.split(" ")
         for arg in range(len(str_as_lst)):
             if re.match(r"[\-]+$", str_as_lst[arg]):
@@ -60,13 +55,11 @@ def handle_variables(arguments_str, variables):
     elif re.search(r"=", arguments_str):
         return assign_variable(arguments_str, variables)
 
-
     elif re.match(expr_template, arguments_str):
         """ expression with variables """
-        expression_list = compute_var_operations(arguments_str, variables).split(" ")
-        if expression_list:
-            exp_str = " ".join(expression_list)
-            return transform_into_expression(exp_str, variables)
+        expression_str = compute_var_operations(arguments_str, variables)
+        if expression_str:
+            return transform_into_expression(expression_str, variables)
 
 
 def assign_variable(arguments_str, variables) -> None:
@@ -91,7 +84,7 @@ def assign_variable(arguments_str, variables) -> None:
         print("Invalid assignment")
 
 
-def compute_var_operations(arguments_str, variables) -> list:
+def compute_var_operations(arguments_str, variables) -> str:
     var_list = re.findall(r"[\w]+", arguments_str, flags=re.IGNORECASE)
     issue_counter = 0
     arguments_lst = arguments_str.split(" ")
@@ -143,8 +136,7 @@ def main():
                 expression_deque = deque(expression.split(" "))
                 result = compute_expression(expression_deque)
                 print(result)
-            else:
-                pass
+
 
 if __name__ == '__main__':
     main()
