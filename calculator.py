@@ -54,7 +54,6 @@ def handle_variables(arguments_str, variables):
         """ASSIGNMENT SCENARIO"""
     elif re.search(r"=", arguments_str):
         return assign_variable(arguments_str, variables)
-
     elif re.match(expr_template, arguments_str):
         """ expression with variables """
         expression_str = compute_var_operations(arguments_str, variables)
@@ -65,7 +64,6 @@ def handle_variables(arguments_str, variables):
 def assign_variable(arguments_str, variables) -> None:
     var_ass_template = re.compile(r"\A\s*[a-z]+\s*=\s*([a-z]+|[\d]+)\s*$", flags=re.IGNORECASE)
     if re.match(var_ass_template, arguments_str):
-
         """ scenario for var = int/float only """
         var, val = re.split(r"\s*=\s*", arguments_str.replace(" ", ""))
         var = var.strip(" ")
@@ -107,7 +105,6 @@ def compute_var_operations(arguments_str, variables) -> str:
 
 def compute_expression(math_expression) -> str:
     """takes deque object representing math expression and recursively calculates until answer is ready, then returns the answer as a str """
-
     # math_expression = prioritized_computation(math_expression)  # turned of for the stage #6 as no prioritized operations for now
     if len(math_expression) == 1:
         return "".join(math_expression)
@@ -120,6 +117,7 @@ def compute_expression(math_expression) -> str:
         elif sign == "+":
             math_expression.appendleft(str(arg1 + arg2))
         return compute_expression(math_expression)
+
 
 
 def main():
@@ -138,5 +136,43 @@ def main():
                 print(result)
 
 
+def postfix_algorigm(str_expression):
+
+    tokens = str_expression.split(" ")
+
+    operator_stack = deque()
+    output_queue = deque()
+
+
+    for element in tokens:
+        """ if an element of the 'tokens' stack is digit"""
+        if element.isdigit():
+            output_queue.append(element)
+
+        elif element in {"+", "-", "*", "/", "^"}:
+            top = {"*", "/", "^"}
+            if operator_stack:
+                while operator_stack[-1] in top:
+                    output_queue.append(operator_stack.pop())
+                else:
+                    operator_stack.append(element)  # check this line
+            else:
+                operator_stack.append(element)
+        elif element == "(":
+            operator_stack.append(element)
+        elif element == ")":
+            while operator_stack[-1] != "(":
+                output_queue.append(operator_stack.pop())
+            if operator_stack[-1] == "(":
+                operator_stack.pop()
+
+    print("output_queue:\n", output_queue)
+    output = output_queue + operator_stack
+    print(output)
+
 if __name__ == '__main__':
-    main()
+    #main()
+    arg_str = "2 * (3 + 4) + 1"
+    arg_str = arg_str.replace("(", "( ").replace(")", " )")  # making braket a separate element
+    print("ORIGINAL EXPRESSION:\n", arg_str)
+    postfix_algorigm(arg_str)
