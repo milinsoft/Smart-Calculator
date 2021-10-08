@@ -23,28 +23,56 @@ def transform_into_expression(string, variables) -> str:
     elif string[-1] in {"+", "-", "/", "*"}:
         print("Invalid expression")
     elif re.search(r"[a-z]+", string, flags=re.IGNORECASE):
+
+
         return handle_variables(string, variables)
-    elif re.search(r"(([-+]?)\d+( ?[-+*/]+ ?\d+)+)", string):
+
+    elif "**" in string or "//" in string:
+
+        """ if there is a sequence of * or /, the program must print error message """
+        print("Invalid expression")
+
+    # r"(([-+]?)\d+( ?[-+*/]+ ?\d+)+)"
+    elif re.search(r"\A[-+]?((\d+\s*[+-/*)(\s]+\s*)*\d*)*", string):
         """ this template take an expresion with already replaced variables with their values
         double or more * is not allowed, replace with ^ and add single * - rewrite regex"""
         """Splitting arguments and signs into the list"""
-        str_as_lst = string.split(" ")
-        for arg in range(len(str_as_lst)):
-            if re.match(r"[\-]+$", str_as_lst[arg]):
-                if len(str_as_lst[arg]) % 2 == 0:
-                    str_as_lst[arg] = "+"
-                else:
-                    str_as_lst[arg] = "-"
-            elif re.match(r"\+{2,}", str_as_lst[arg]):
-                str_as_lst[arg] = "+"
-        string = " ".join(str_as_lst)
-        return string
+
+        #print("LINE 36 works")
+        # replacing sequences of + with a single plus
+        if re.search(r"\+{2,}", string):
+            string = re.sub(r"\+{2,}", "+", string)
+        # replacing all minuse sequences with + or - based on their meaning
+        if re.search(r"-{2,}", string):
+            if len(re.search(r"-{2,}", string).group()) % 2 == 0:
+                string = re.sub(r"-{2,}", "+", string)
+            else:
+                string = re.sub(r"-{2,}", "-", string)
+
+
+        braces = deque()
+        if "(" in string or ")" in string:
+            # braces = deque()
+            for symbol in string:
+                if symbol == "(":
+                    braces.append(symbol)
+                elif symbol == ")":
+                    if not braces:
+                        print("Invalid expression")
+                        return ""
+                    else:
+                        braces.popleft()
+
+        if len(braces) != 0:
+            print("Invalid expression")
+        else:
+            return string
     else:
         print("Invalid expression")
 
 
 def handle_variables(arguments_str, variables):
-    expr_template = re.compile(r"\A(\s*\w+\s*[-+*/]*\s*)+$")
+    expr_template = re.compile(r"\A[-+]?(\w+\s*[+-/*)(\s]+\s*)*")
     """Print variable value scenario"""
     if re.match(r"\A\s*[a-z]+$", arguments_str, flags=re.IGNORECASE):
         if arguments_str in variables.keys():
@@ -97,6 +125,7 @@ def compute_var_operations(arguments_str, variables) -> str:
                     arguments_lst[i] = str(arguments_lst[i])
                 else:
                     issue_counter += 1
+                    # concider replacing the line above with error message
     if issue_counter:
         print("Unknown variable")
     else:
@@ -119,11 +148,10 @@ def compute_expression(math_expression) -> str:
         return compute_expression(math_expression)
 
 
-
 def main():
     variables = dict()
     while True:
-        arguments_str = input().strip()  # removing all extra spaces on both sides of input
+        arguments_str = input().strip().replace("(", "( ").replace(")", " )")  # removing all extra spaces on both sides of input
         if len(arguments_str) == 0:
             continue
         elif arguments_str.startswith("/"):
@@ -131,33 +159,41 @@ def main():
         else:
             expression = transform_into_expression(arguments_str, variables)
             if expression:
-                expression_deque = deque(expression.split(" "))
-                result = compute_expression(expression_deque)
+                # expression_deque = deque(expression.split(" "))
+                # print("EXPRESSION IS:\n", expression)
+                # result = compute_expression(expression_deque)
+                result = int(eval(expression))
                 print(result)
 
 
 def postfix_algorigm(str_expression):
+
+    str_expression = str_expression.replace("(", "( ").replace(")", " )")
 
     tokens = str_expression.split(" ")
 
     operator_stack = deque()
     output_queue = deque()
 
-
     for element in tokens:
         """ if an element of the 'tokens' stack is digit"""
         if element.isdigit():
             output_queue.append(element)
-
+        # if element is an operator
         elif element in {"+", "-", "*", "/", "^"}:
-            top = {"*", "/", "^"}
-            if operator_stack:
-                while operator_stack[-1] in top:
+            top = {"*", "/", "^"}  # top priority operators
+
+            if operator_stack:  # check if there is at least one element in operator_stack
+                while operator_stack and operator_stack[-1] in top:  # if top operator in stack has higher priority than current iterated element - pushing elements from
+                    # stack to output queue
                     output_queue.append(operator_stack.pop())
-                else:
-                    operator_stack.append(element)  # check this line
+                # else adding ot the operator_stack
+                operator_stack.append(element)
+
+            # if there are no elements in operator_stack - appending, not additional checks required
             else:
                 operator_stack.append(element)
+
         elif element == "(":
             operator_stack.append(element)
         elif element == ")":
@@ -165,14 +201,51 @@ def postfix_algorigm(str_expression):
                 output_queue.append(operator_stack.pop())
             if operator_stack[-1] == "(":
                 operator_stack.pop()
+                # these lines can be deleted
+                while operator_stack:
+                    output_queue.append(operator_stack.pop())
 
-    print("output_queue:\n", output_queue)
-    output = output_queue + operator_stack
-    print(output)
+    while operator_stack:
+        output_queue.append(operator_stack.pop())
+    print("output_queue:\n", " ".join(output_queue))
+    """ at this moment result is like:
+        ORIGINAL EXPRESSION:
+     2 * (3 + 4) + 1 + 2 ^ 2
+    output_queue:
+     2 3 4 + * 1 2 2 ^ + +
+     
+     but the one required is: 
+     2 3 4 + * 1 + 2 2 ^ +
+     """
+    # output = " ".join(output_queue)
+
+
+def remove_redundand_signs():
+    expression = input()
+
+    # make loop or all operations as separate ifs
+
+    # replacing all multiple pluses with just one
+    if re.search(r"\+{2,}", expression):
+        expression = re.sub(r"\+{2,}", "+", expression)
+
+    # replacing all multiple minuses with just one
+    if re.search(r"-{2,}", expression):
+        if len(re.search(r"-{2,}", expression).group()) % 2 == 0:
+            expression = re.sub(r"-{2,}", "+", expression)
+        else:
+            expression = re.sub(r"-{2,}", "-", expression)
+
+
+    print(expression)
 
 if __name__ == '__main__':
-    #main()
-    arg_str = "2 * (3 + 4) + 1"
-    arg_str = arg_str.replace("(", "( ").replace(")", " )")  # making braket a separate element
-    print("ORIGINAL EXPRESSION:\n", arg_str)
-    postfix_algorigm(arg_str)
+    #remove_redundand_signs()
+    main()
+    # arg_str = "2 * (3 + 4) + 1 + 2 ^ 2"
+    # making braket a separate element
+    # print("ORIGINAL EXPRESSION:\n", arg_str)
+    # postfix_algorigm(arg_str)
+
+
+
