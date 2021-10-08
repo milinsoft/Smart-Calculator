@@ -220,25 +220,6 @@ def postfix_algorigm(str_expression):
     # output = " ".join(output_queue)
 
 
-def remove_redundand_signs():
-    expression = input()
-
-    # make loop or all operations as separate ifs
-
-    # replacing all multiple pluses with just one
-    if re.search(r"\+{2,}", expression):
-        expression = re.sub(r"\+{2,}", "+", expression)
-
-    # replacing all multiple minuses with just one
-    if re.search(r"-{2,}", expression):
-        if len(re.search(r"-{2,}", expression).group()) % 2 == 0:
-            expression = re.sub(r"-{2,}", "+", expression)
-        else:
-            expression = re.sub(r"-{2,}", "-", expression)
-
-
-    print(expression)
-
 if __name__ == '__main__':
     #remove_redundand_signs()
     main()
