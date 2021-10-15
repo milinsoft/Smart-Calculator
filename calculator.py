@@ -23,12 +23,9 @@ def transform_into_expression(string, variables) -> str:
     elif string[-1] in {"+", "-", "/", "*"}:
         print("Invalid expression")
     elif re.search(r"[a-z]+", string, flags=re.IGNORECASE):
-
-
         return handle_variables(string, variables)
 
     elif "**" in string or "//" in string:
-
         """ if there is a sequence of * or /, the program must print error message """
         print("Invalid expression")
 
@@ -38,7 +35,7 @@ def transform_into_expression(string, variables) -> str:
         double or more * is not allowed, replace with ^ and add single * - rewrite regex"""
         """Splitting arguments and signs into the list"""
 
-        #print("LINE 36 works")
+        # print("LINE 36 works")
         # replacing sequences of + with a single plus
         if re.search(r"\+{2,}", string):
             string = re.sub(r"\+{2,}", "+", string)
@@ -167,47 +164,46 @@ def main():
 
 
 def postfix_algorigm(str_expression):
-
+    print("function called")
     str_expression = str_expression.replace("(", "( ").replace(")", " )")
+    infix_tokens = str_expression.split(" ")
 
-    tokens = str_expression.split(" ")
+    op_stack = deque()
+    postfix = deque()
+    for x in infix_tokens:
+        if x.isdigit():
+            postfix.append(x)
+        elif x == "(":
+            op_stack.append(x)
+        elif x == ")":
+            while op_stack:
+                if op_stack[-1] != "(":
+                    postfix.append(op_stack.pop())
+                else:
+                    op_stack.pop()
+                    break
+        elif x in {'+', '-', '*', '/', '^'}:
+            # if x == "^"
+            if op_stack:
+                # re-write this condition in such a way to make sure that operator is poped if it has both equal or less priority than current stack head
+                if op_stack[-1] in {'*', '/', '^'}:
+                    postfix.append(op_stack.pop())
+                    op_stack.append(x)  # while operator with greater priority pused to the postfix queue, the operator with lower priotiry still needs to be appended
+                else:
+                    op_stack.append(x)
 
-    operator_stack = deque()
-    output_queue = deque()
+            else:  # if not op_stack
+                op_stack.append(x)
 
-    for element in tokens:
-        """ if an element of the 'tokens' stack is digit"""
-        if element.isdigit():
-            output_queue.append(element)
-        # if element is an operator
-        elif element in {"+", "-", "*", "/", "^"}:
-            top = {"*", "/", "^"}  # top priority operators
 
-            if operator_stack:  # check if there is at least one element in operator_stack
-                while operator_stack and operator_stack[-1] in top:  # if top operator in stack has higher priority than current iterated element - pushing elements from
-                    # stack to output queue
-                    output_queue.append(operator_stack.pop())
-                # else adding ot the operator_stack
-                operator_stack.append(element)
 
-            # if there are no elements in operator_stack - appending, not additional checks required
-            else:
-                operator_stack.append(element)
+    print("POSTFIX:", postfix)
+    print("OP STACK: ", op_stack)
 
-        elif element == "(":
-            operator_stack.append(element)
-        elif element == ")":
-            while operator_stack[-1] != "(":
-                output_queue.append(operator_stack.pop())
-            if operator_stack[-1] == "(":
-                operator_stack.pop()
-                # these lines can be deleted
-                while operator_stack:
-                    output_queue.append(operator_stack.pop())
+    while op_stack:
+        postfix.append(op_stack.pop())
 
-    while operator_stack:
-        output_queue.append(operator_stack.pop())
-    print("output_queue:\n", " ".join(output_queue))
+    print("output_queue:\n", " ".join(postfix))
     """ at this moment result is like:
         ORIGINAL EXPRESSION:
      2 * (3 + 4) + 1 + 2 ^ 2
@@ -217,16 +213,18 @@ def postfix_algorigm(str_expression):
      but the one required is: 
      2 3 4 + * 1 + 2 2 ^ +
      """
-    # output = " ".join(output_queue)
+
+
+
+    #return postfix
 
 
 if __name__ == '__main__':
-    #remove_redundand_signs()
-    main()
-    # arg_str = "2 * (3 + 4) + 1 + 2 ^ 2"
-    # making braket a separate element
-    # print("ORIGINAL EXPRESSION:\n", arg_str)
-    # postfix_algorigm(arg_str)
+    #main()
+    arg_str = "2 * (3 + 4) + 1 + 2 ^ 2"
+    #arg_str = "2 * (3 + 4) + 1"
+    print("ORIGINAL EXPRESSION:\n", arg_str)
+    postfix_algorigm(arg_str)
 
 
-
+#create/copy one more postfix fun inplementation, run simultaniously and compare.
