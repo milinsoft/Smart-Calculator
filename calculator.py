@@ -164,10 +164,9 @@ def main():
 
 
 def postfix_algorigm(str_expression):
-    print("function called")
+    priority = {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
     str_expression = str_expression.replace("(", "( ").replace(")", " )")
     infix_tokens = str_expression.split(" ")
-
     op_stack = deque()
     postfix = deque()
     for x in infix_tokens:
@@ -183,23 +182,17 @@ def postfix_algorigm(str_expression):
                     op_stack.pop()
                     break
         elif x in {'+', '-', '*', '/', '^'}:
-            # if x == "^"
             if op_stack:
                 # re-write this condition in such a way to make sure that operator is poped if it has both equal or less priority than current stack head
-                if op_stack[-1] in {'*', '/', '^'}:
+                if op_stack[-1] == "(":
+                    op_stack.append(x)
+                elif priority[x] <= priority[op_stack[-1]]:
                     postfix.append(op_stack.pop())
                     op_stack.append(x)  # while operator with greater priority pused to the postfix queue, the operator with lower priotiry still needs to be appended
                 else:
                     op_stack.append(x)
-
             else:  # if not op_stack
                 op_stack.append(x)
-
-
-
-    print("POSTFIX:", postfix)
-    print("OP STACK: ", op_stack)
-
     while op_stack:
         postfix.append(op_stack.pop())
 
@@ -213,10 +206,6 @@ def postfix_algorigm(str_expression):
      but the one required is: 
      2 3 4 + * 1 + 2 2 ^ +
      """
-
-
-
-    #return postfix
 
 
 if __name__ == '__main__':
