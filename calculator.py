@@ -111,8 +111,7 @@ def compute_var_operations(arguments_str, variables) -> str:
     var_list = re.findall(r"[\w]+", arguments_str, flags=re.IGNORECASE)
     issue_counter = 0
     arguments_lst = arguments_str.split(" ")
-
-    """ test just this function with the complex variable + int expression"""
+    """test just this function with the complex variable + int expression"""
     for i in range(int(len(arguments_lst))):
         if arguments_lst[i] in var_list:
             if arguments_lst[i] in variables.keys():
@@ -129,41 +128,8 @@ def compute_var_operations(arguments_str, variables) -> str:
         return " ".join(arguments_lst)
 
 
-def compute_expression(math_expression) -> str:
-    """takes deque object representing math expression and recursively calculates until answer is ready, then returns the answer as a str """
-    # math_expression = prioritized_computation(math_expression)  # turned of for the stage #6 as no prioritized operations for now
-    if len(math_expression) == 1:
-        return "".join(math_expression)
-    else:
-        arg1 = int(math_expression.popleft())
-        sign = math_expression.popleft()
-        arg2 = int(math_expression.popleft())
-        if sign == "-":
-            math_expression.appendleft(str(arg1 - arg2))
-        elif sign == "+":
-            math_expression.appendleft(str(arg1 + arg2))
-        return compute_expression(math_expression)
-
-
-def main():
-    variables = dict()
-    while True:
-        arguments_str = input().strip().replace("(", "( ").replace(")", " )")  # removing all extra spaces on both sides of input
-        if len(arguments_str) == 0:
-            continue
-        elif arguments_str.startswith("/"):
-            handle_command(arguments_str)
-        else:
-            expression = transform_into_expression(arguments_str, variables)
-            if expression:
-                # expression_deque = deque(expression.split(" "))
-                # print("EXPRESSION IS:\n", expression)
-                # result = compute_expression(expression_deque)
-                result = int(eval(expression))
-                print(result)
-
-
 def postfix_algorigm(str_expression):
+    """ add explanation"""
     priority = {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
     str_expression = str_expression.replace("(", "( ").replace(")", " )")
     infix_tokens = str_expression.split(" ")
@@ -196,24 +162,56 @@ def postfix_algorigm(str_expression):
     while op_stack:
         postfix.append(op_stack.pop())
 
-    print("output_queue:\n", " ".join(postfix))
-    """ at this moment result is like:
-        ORIGINAL EXPRESSION:
-     2 * (3 + 4) + 1 + 2 ^ 2
-    output_queue:
-     2 3 4 + * 1 2 2 ^ + +
-     
-     but the one required is: 
-     2 3 4 + * 1 + 2 2 ^ +
-     """
+    # print("output_queue:\n", " ".join(postfix))
+    return " ".join(postfix)
 
+
+def postfix_computation(postfix_expression):
+    calculated_expression = deque()
+    for x in postfix_expression.split(" "):
+        if x.isdigit():
+            calculated_expression.append(x)
+        elif x in {"+", "-", "*", "/", "^"}:
+            if x == "+":
+                arg2 = int(calculated_expression.pop())
+                arg1 = int(calculated_expression.pop())
+                calculated_expression.append(arg1 + arg2)
+            elif x == "-":
+                arg2 = int(calculated_expression.pop())
+                arg1 = int(calculated_expression.pop())
+                calculated_expression.append(arg1 - arg2)
+            elif x == "*":
+                arg2 = int(calculated_expression.pop())
+                arg1 = int(calculated_expression.pop())
+                calculated_expression.append(arg1 * arg2)
+            elif x == "/":
+                arg2 = int(calculated_expression.pop())
+                arg1 = int(calculated_expression.pop())
+                calculated_expression.append(arg1 / arg2)
+            elif x == "^":
+                arg2 = int(calculated_expression.pop())
+                arg1 = int(calculated_expression.pop())
+                calculated_expression.append(arg1 ** arg2)
+
+    return calculated_expression
+
+
+def main():
+    variables = dict()
+    while True:
+        arguments_str = input().strip().replace("(", "( ").replace(")", " )")  # removing all extra spaces on both sides of input
+        if len(arguments_str) == 0:
+            continue
+        elif arguments_str.startswith("/"):
+            handle_command(arguments_str)
+        else:
+            expression = transform_into_expression(arguments_str, variables)
+            if expression:
+                postfix_format = postfix_algorigm(expression)
+                result = postfix_computation(postfix_format)
+                print(*result)
 
 if __name__ == '__main__':
-    #main()
-    arg_str = "2 * (3 + 4) + 1 + 2 ^ 2"
-    #arg_str = "2 * (3 + 4) + 1"
-    print("ORIGINAL EXPRESSION:\n", arg_str)
-    postfix_algorigm(arg_str)
+    main()
 
 
-#create/copy one more postfix fun inplementation, run simultaniously and compare.
