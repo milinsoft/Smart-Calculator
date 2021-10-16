@@ -4,14 +4,32 @@ import re
 from collections import deque
 
 
-def handle_command(command):
+def handle_command(command:"reading string command starting with '/'") -> None:
+    #print(handle_command.__annotations__)
     if command == "/exit":
         print("Bye!")
         exit()
     elif command == "/help":
-        print("The program calculates a given expression")
+        print("The program calculates a given expression, acceptable operations: '+', '-', '/', '*' ")
     else:
         print("Unknown command")
+
+
+
+def space_delimited_format(user_expression:"") -> str:
+    if re.search(r"\+", user_expression):
+        user_expression = re.sub(r"\+", r" + ", user_expression)
+    if re.search(r"-", user_expression):
+        user_expression = re.sub(r"-", r" - ", user_expression)
+    if re.search(r"/", user_expression):
+        user_expression = re.sub(r"/", r" / ", user_expression)
+    if re.search(r"\*", user_expression):
+        user_expression = re.sub(r"\*", r" * ", user_expression)
+    if re.search(r"\(", user_expression):
+        user_expression = re.sub(r"\(", r"( ", user_expression)
+    if re.search(r"\)", user_expression):
+        user_expression = re.sub(r"\)", r" )", user_expression)
+    return user_expression
 
 
 def transform_into_expression(string, variables) -> str:
@@ -24,19 +42,13 @@ def transform_into_expression(string, variables) -> str:
         print("Invalid expression")
     elif re.search(r"[a-z]+", string, flags=re.IGNORECASE):
         return handle_variables(string, variables)
-
     elif "**" in string or "//" in string:
         """ if there is a sequence of * or /, the program must print error message """
         print("Invalid expression")
-
-    # r"(([-+]?)\d+( ?[-+*/]+ ?\d+)+)"
     elif re.search(r"\A[-+]?((\d+\s*[+-/*)(\s]+\s*)*\d*)*", string):
         """ this template take an expresion with already replaced variables with their values
         double or more * is not allowed, replace with ^ and add single * - rewrite regex"""
         """Splitting arguments and signs into the list"""
-
-        # print("LINE 36 works")
-        # replacing sequences of + with a single plus
         if re.search(r"\+{2,}", string):
             string = re.sub(r"\+{2,}", "+", string)
         # replacing all minuse sequences with + or - based on their meaning
@@ -45,11 +57,8 @@ def transform_into_expression(string, variables) -> str:
                 string = re.sub(r"-{2,}", "+", string)
             else:
                 string = re.sub(r"-{2,}", "-", string)
-
-
         braces = deque()
         if "(" in string or ")" in string:
-            # braces = deque()
             for symbol in string:
                 if symbol == "(":
                     braces.append(symbol)
@@ -59,7 +68,6 @@ def transform_into_expression(string, variables) -> str:
                         return ""
                     else:
                         braces.popleft()
-
         if len(braces) != 0:
             print("Invalid expression")
         else:
@@ -68,7 +76,7 @@ def transform_into_expression(string, variables) -> str:
         print("Invalid expression")
 
 
-def handle_variables(arguments_str, variables):
+def handle_variables(arguments_str, variables) -> None:
     expr_template = re.compile(r"\A[-+]?(\w+\s*[+-/*)(\s]+\s*)*")
     """Print variable value scenario"""
     if re.match(r"\A\s*[a-z]+$", arguments_str, flags=re.IGNORECASE):
@@ -81,7 +89,7 @@ def handle_variables(arguments_str, variables):
         return assign_variable(arguments_str, variables)
     elif re.match(expr_template, arguments_str):
         """ expression with variables """
-        expression_str = compute_var_operations(arguments_str, variables)
+        expression_str = replace_var_with_value(arguments_str, variables)
         if expression_str:
             return transform_into_expression(expression_str, variables)
 
@@ -107,7 +115,7 @@ def assign_variable(arguments_str, variables) -> None:
         print("Invalid assignment")
 
 
-def compute_var_operations(arguments_str, variables) -> str:
+def replace_var_with_value(arguments_str, variables) -> str:
     var_list = re.findall(r"[\w]+", arguments_str, flags=re.IGNORECASE)
     issue_counter = 0
     arguments_lst = arguments_str.split(" ")
@@ -128,7 +136,7 @@ def compute_var_operations(arguments_str, variables) -> str:
         return " ".join(arguments_lst)
 
 
-def postfix_algorigm(str_expression):
+def postfix_algorigm(str_expression) -> str:
     """ add explanation"""
     priority = {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
     str_expression = str_expression.replace("(", "( ").replace(")", " )")
@@ -161,12 +169,10 @@ def postfix_algorigm(str_expression):
                 op_stack.append(x)
     while op_stack:
         postfix.append(op_stack.pop())
-
-    # print("output_queue:\n", " ".join(postfix))
     return " ".join(postfix)
 
 
-def postfix_computation(postfix_expression):
+def postfix_computation(postfix_expression) -> int:
     calculated_expression = deque()
     for x in postfix_expression.split(" "):
         if x.isdigit():
@@ -192,26 +198,25 @@ def postfix_computation(postfix_expression):
                 arg2 = int(calculated_expression.pop())
                 arg1 = int(calculated_expression.pop())
                 calculated_expression.append(arg1 ** arg2)
-
-    return calculated_expression
+    return calculated_expression[-1]
 
 
 def main():
     variables = dict()
     while True:
-        arguments_str = input().strip().replace("(", "( ").replace(")", " )")  # removing all extra spaces on both sides of input
-        if len(arguments_str) == 0:
+        arguments_str = input().strip()  # removing all extra spaces on both sides of input
+        if not arguments_str:
             continue
         elif arguments_str.startswith("/"):
             handle_command(arguments_str)
         else:
             expression = transform_into_expression(arguments_str, variables)
             if expression:
+                expression = space_delimited_format(expression)
                 postfix_format = postfix_algorigm(expression)
                 result = postfix_computation(postfix_format)
-                print(*result)
+                print(result)
+
 
 if __name__ == '__main__':
     main()
-
-
