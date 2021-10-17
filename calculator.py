@@ -4,7 +4,7 @@ from collections import deque
 
 
 # done
-def handle_command(command: "special command'/help' or '/exit' "):
+def handle_command(command: dict(description="special command'/help' or '/exit'", type=str)):
     if command == "/exit":
         print("Bye!")
         exit()
@@ -46,83 +46,87 @@ def space_delimited_format(expression: str) -> str:
     return expression
 
 
-def transform_into_expression(expression_string: str, variables: "empty dict to fill out, storing variables") -> str:
-    if re.match(r"\A[-+]?\d+$", expression_string):
-        print(expression_string.lstrip("+"))
-    elif re.search(r"[a-z]+", expression_string, flags=re.IGNORECASE):
-        return handle_variables(expression_string, variables)
-
-    # devide this logic into several steps like "reppitive symbols replacing? braces check .. and so on
-
-    elif re.search(r"\A[-+]?((\d+\s*[+-/*^)(\s]+\s*)*\d*)*", expression_string):
-        """ this template take an expresion with already replaced variables with their values
-        double or more * is not allowed, replace with ^ and add single * - rewrite regex"""
-        """Splitting arguments and signs into the list"""
-        if re.search(r"\+{2,}", expression_string):
-            expression_string = re.sub(r"\+{2,}", "+", expression_string)
+def repetitive_signs_amendment(expression_string) -> str:
+    if re.search(r"\+{2,}", expression_string):
+        expression_string = re.sub(r"\+{2,}", "+", expression_string)
         # replacing all minuse sequences with + or - based on their meaning
-        if re.search(r"-{2,}", expression_string):
-            if len(re.search(r"-{2,}", expression_string).group()) % 2 == 0:
-                expression_string = re.sub(r"-{2,}", "+", expression_string)
-            else:
-                expression_string = re.sub(r"-{2,}", "-", expression_string)
-        braces = deque()
-        if "(" in expression_string or ")" in expression_string:
-            for symbol in expression_string:
-                if symbol == "(":
-                    braces.append(symbol)
-                elif symbol == ")":
-                    if not braces:
-                        print("Invalid expression")
-                        return ""
-                    else:
-                        braces.popleft()
-        if len(braces) != 0:
-            print("Invalid expression")
+    if re.search(r"-{2,}", expression_string):
+        if len(re.search(r"-{2,}", expression_string).group()) % 2 == 0:
+            expression_string = re.sub(r"-{2,}", "+", expression_string)
         else:
+            expression_string = re.sub(r"-{2,}", "-", expression_string)
+    return expression_string
+
+
+def braces_balance(expression_string) -> bool:
+    braces = deque()
+    if "(" in expression_string or ")" in expression_string:
+        for symbol in expression_string:
+            if symbol == "(":
+                braces.append(symbol)
+            elif symbol == ")":
+                if not braces:
+                    return False
+                else:
+                    braces.popleft()
+    if len(braces) != 0:
+        return False
+    return True
+
+
+def transform_into_expression(expression_string: str, variables: "empty dict to fill out, storing variables") -> str:
+    # expression with variable(s) case
+    if re.search(r"[a-z]+", expression_string, flags=re.IGNORECASE):
+        return handle_variables(expression_string, variables)
+    # numeric expression case
+    elif re.search(r"\A[-+]?((\d+\s*[+-/*^)(\s]+\s*)*\d*)*", expression_string):
+        if braces_balance(expression_string):
+            expression_string = repetitive_signs_amendment(expression_string)
             expression_string = space_delimited_format(expression_string)
             return expression_string
+        else:
+            print("Invalid expression")
     else:
         print("Invalid expression")
 
 
-def handle_variables(user_input, variables) -> str:
+def handle_variables(user_input, variables: dict) -> str:
     expr_template = re.compile(r"\A[-+]?(\w+\s*[+-/*)(\s]+\s*)*")
-    """Print variable value scenario"""
+    # print variable's value
     if re.match(r"\A\s*[a-z]+$", user_input, flags=re.IGNORECASE):
         if user_input in variables.keys():
             print(variables[user_input])
         else:
             print("Unknown variable")
-        """ ASSIGNMENT SCENARIO """
+    # assignment
     elif re.search(r"=", user_input):
         assign_variable(user_input, variables)
+    # replacing variables with their values:
     elif re.match(expr_template, user_input):
-        """ expression with variables """
         expression_str = replace_var_with_value(user_input, variables)
         if expression_str:
             return transform_into_expression(expression_str, variables)
 
 
-def assign_variable(user_input, variables):
+# done
+def assign_variable(user_input: str, variables: dict):
     var_ass_template = re.compile(r"\A\s*[a-z]+\s*=\s*([a-z]+|[\d]+)\s*$", flags=re.IGNORECASE)
     if re.match(var_ass_template, user_input):
-        """ scenario for var = int/float only """
         var, val = re.split(r"\s*=\s*", user_input.replace(" ", ""))
+        # assignment from scratch
         if val.isnumeric():
             variables[var] = val
+        # reassignment
+        elif val in variables.keys():
+            variables[var] = variables[val]
+        # error
         else:
-            """reassignment"""
-            if val in variables.keys():
-                variables[var] = variables[val]
-            else:
-                print("Unknown variable")
-    elif re.match(r"\w+", user_input):
-        print("Invalid identifier")
+            print("Unknown variable")
     else:
         print("Invalid assignment")
 
 
+# done
 def replace_var_with_value(user_input, variables) -> str:
     var_list = re.findall(r"[\w]+", user_input, flags=re.IGNORECASE)
     arguments_lst = user_input.split(" ")
@@ -137,8 +141,7 @@ def replace_var_with_value(user_input, variables) -> str:
                 else:
                     print("Unknown variable")
                     break
-    else:
-        return " ".join(arguments_lst)
+    return " ".join(arguments_lst)
 
 
 def postfix_algorigm(str_expression) -> str:
@@ -178,6 +181,7 @@ def postfix_algorigm(str_expression) -> str:
     return " ".join(postfix)
 
 
+# done
 def postfix_computation(postfix_expression: dict(description="A expression_string expression in postfix format", type=str)) -> int:
     calculated_expression = deque()
     for x in postfix_expression.split(" "):
@@ -215,8 +219,11 @@ def main():
             continue
         elif user_input.startswith("/"):
             handle_command(user_input)
+        elif re.match(r"\A[-+]?\d+$", user_input):  # single number/digit case
+            print(user_input.lstrip("+"))
         elif is_invalid_expression(user_input):
             print("Invalid expression")
+
         else:
             expression = transform_into_expression(user_input, variables)
             if expression:
