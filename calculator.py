@@ -1,11 +1,10 @@
 import re
 
-
 from collections import deque
 
 
-def handle_command(command:"reading string command starting with '/'") -> None:
-    #print(handle_command.__annotations__)
+# done
+def handle_command(command: "special command'/help' or '/exit' "):
     if command == "/exit":
         print("Bye!")
         exit()
@@ -15,51 +14,58 @@ def handle_command(command:"reading string command starting with '/'") -> None:
         print("Unknown command")
 
 
-
-def space_delimited_format(user_expression:"") -> str:
-    if re.search(r"\+", user_expression):
-        user_expression = re.sub(r"\+", r" + ", user_expression)
-    if re.search(r"-", user_expression):
-        user_expression = re.sub(r"-", r" - ", user_expression)
-    if re.search(r"/", user_expression):
-        user_expression = re.sub(r"/", r" / ", user_expression)
-    if re.search(r"\*", user_expression):
-        user_expression = re.sub(r"\*", r" * ", user_expression)
-    if re.search(r"\(", user_expression):
-        user_expression = re.sub(r"\(", r"( ", user_expression)
-    if re.search(r"\)", user_expression):
-        user_expression = re.sub(r"\)", r" )", user_expression)
-    return user_expression
+# done
+def is_invalid_expression(expression_expression_string: str) -> bool:
+    if any([expression_expression_string[-1] in {"+", "-", "/", "*"}, "**" in expression_expression_string, "//" in expression_expression_string]):
+        return True
+    for x in expression_expression_string:
+        if not re.match(r"[\w^\+\-/\*= \(\)]", x):
+            return True
+    return False
 
 
-def transform_into_expression(string, variables) -> str:
-    """this function takes input string and empty variables dict as arguments, analysis if provided expression is valid and
-     formats an expression by replacing variables with its values and reducing sequence of repittive math operators.
-     otherwise an error message is printer"""
-    if re.match(r"\A[-+]?\d+$", string):
-        print(string.lstrip("+"))
-    elif string[-1] in {"+", "-", "/", "*"}:
-        print("Invalid expression")
-    elif re.search(r"[a-z]+", string, flags=re.IGNORECASE):
-        return handle_variables(string, variables)
-    elif "**" in string or "//" in string:
-        """ if there is a sequence of * or /, the program must print error message """
-        print("Invalid expression")
-    elif re.search(r"\A[-+]?((\d+\s*[+-/*)(\s]+\s*)*\d*)*", string):
+# done
+def space_delimited_format(expression: str) -> str:
+    if re.search(r"\+", expression):
+        expression = re.sub(r"\+", r" + ", expression)
+    if re.search(r"-", expression):
+        expression = re.sub(r"-", r" - ", expression)
+    if re.search(r"/", expression):
+        expression = re.sub(r"/", r" / ", expression)
+    if re.search(r"\*", expression):
+        expression = re.sub(r"\*", r" * ", expression)
+    if re.search(r"\(", expression):
+        expression = re.sub(r"\(", r"( ", expression)
+    if re.search(r"\)", expression):
+        expression = re.sub(r"\)", r" )", expression)
+    if re.search(r"\^", expression):
+        expression = re.sub(r"\^", r" ^ ", expression)
+    return expression
+
+
+def transform_into_expression(expression_string: str, variables: "empty dict to fill out, storing variables") -> str:
+    if re.match(r"\A[-+]?\d+$", expression_string):
+        print(expression_string.lstrip("+"))
+    elif re.search(r"[a-z]+", expression_string, flags=re.IGNORECASE):
+        return handle_variables(expression_string, variables)
+
+    # devide this logic into several steps like "reppitive symbols replacing? braces check .. and so on
+
+    elif re.search(r"\A[-+]?((\d+\s*[+-/*^)(\s]+\s*)*\d*)*", expression_string):
         """ this template take an expresion with already replaced variables with their values
         double or more * is not allowed, replace with ^ and add single * - rewrite regex"""
         """Splitting arguments and signs into the list"""
-        if re.search(r"\+{2,}", string):
-            string = re.sub(r"\+{2,}", "+", string)
+        if re.search(r"\+{2,}", expression_string):
+            expression_string = re.sub(r"\+{2,}", "+", expression_string)
         # replacing all minuse sequences with + or - based on their meaning
-        if re.search(r"-{2,}", string):
-            if len(re.search(r"-{2,}", string).group()) % 2 == 0:
-                string = re.sub(r"-{2,}", "+", string)
+        if re.search(r"-{2,}", expression_string):
+            if len(re.search(r"-{2,}", expression_string).group()) % 2 == 0:
+                expression_string = re.sub(r"-{2,}", "+", expression_string)
             else:
-                string = re.sub(r"-{2,}", "-", string)
+                expression_string = re.sub(r"-{2,}", "-", expression_string)
         braces = deque()
-        if "(" in string or ")" in string:
-            for symbol in string:
+        if "(" in expression_string or ")" in expression_string:
+            for symbol in expression_string:
                 if symbol == "(":
                     braces.append(symbol)
                 elif symbol == ")":
@@ -71,36 +77,35 @@ def transform_into_expression(string, variables) -> str:
         if len(braces) != 0:
             print("Invalid expression")
         else:
-            return string
+            expression_string = space_delimited_format(expression_string)
+            return expression_string
     else:
         print("Invalid expression")
 
 
-def handle_variables(arguments_str, variables) -> None:
+def handle_variables(user_input, variables) -> str:
     expr_template = re.compile(r"\A[-+]?(\w+\s*[+-/*)(\s]+\s*)*")
     """Print variable value scenario"""
-    if re.match(r"\A\s*[a-z]+$", arguments_str, flags=re.IGNORECASE):
-        if arguments_str in variables.keys():
-            print(variables[arguments_str])
+    if re.match(r"\A\s*[a-z]+$", user_input, flags=re.IGNORECASE):
+        if user_input in variables.keys():
+            print(variables[user_input])
         else:
             print("Unknown variable")
-        """ASSIGNMENT SCENARIO"""
-    elif re.search(r"=", arguments_str):
-        return assign_variable(arguments_str, variables)
-    elif re.match(expr_template, arguments_str):
+        """ ASSIGNMENT SCENARIO """
+    elif re.search(r"=", user_input):
+        assign_variable(user_input, variables)
+    elif re.match(expr_template, user_input):
         """ expression with variables """
-        expression_str = replace_var_with_value(arguments_str, variables)
+        expression_str = replace_var_with_value(user_input, variables)
         if expression_str:
             return transform_into_expression(expression_str, variables)
 
 
-def assign_variable(arguments_str, variables) -> None:
+def assign_variable(user_input, variables):
     var_ass_template = re.compile(r"\A\s*[a-z]+\s*=\s*([a-z]+|[\d]+)\s*$", flags=re.IGNORECASE)
-    if re.match(var_ass_template, arguments_str):
+    if re.match(var_ass_template, user_input):
         """ scenario for var = int/float only """
-        var, val = re.split(r"\s*=\s*", arguments_str.replace(" ", ""))
-        var = var.strip(" ")
-        val = val.strip(" ")
+        var, val = re.split(r"\s*=\s*", user_input.replace(" ", ""))
         if val.isnumeric():
             variables[var] = val
         else:
@@ -109,16 +114,15 @@ def assign_variable(arguments_str, variables) -> None:
                 variables[var] = variables[val]
             else:
                 print("Unknown variable")
-    elif re.match(r"\w+", arguments_str):
+    elif re.match(r"\w+", user_input):
         print("Invalid identifier")
     else:
         print("Invalid assignment")
 
 
-def replace_var_with_value(arguments_str, variables) -> str:
-    var_list = re.findall(r"[\w]+", arguments_str, flags=re.IGNORECASE)
-    issue_counter = 0
-    arguments_lst = arguments_str.split(" ")
+def replace_var_with_value(user_input, variables) -> str:
+    var_list = re.findall(r"[\w]+", user_input, flags=re.IGNORECASE)
+    arguments_lst = user_input.split(" ")
     """test just this function with the complex variable + int expression"""
     for i in range(int(len(arguments_lst))):
         if arguments_lst[i] in var_list:
@@ -128,10 +132,8 @@ def replace_var_with_value(arguments_str, variables) -> str:
                 if arguments_lst[i].isdigit():
                     arguments_lst[i] = str(arguments_lst[i])
                 else:
-                    issue_counter += 1
-                    # concider replacing the line above with error message
-    if issue_counter:
-        print("Unknown variable")
+                    print("Unknown variable")
+                    break
     else:
         return " ".join(arguments_lst)
 
@@ -162,7 +164,8 @@ def postfix_algorigm(str_expression) -> str:
                     op_stack.append(x)
                 elif priority[x] <= priority[op_stack[-1]]:
                     postfix.append(op_stack.pop())
-                    op_stack.append(x)  # while operator with greater priority pused to the postfix queue, the operator with lower priotiry still needs to be appended
+                    op_stack.append(
+                        x)  # while operator with greater priority pused to the postfix queue, the operator with lower priotiry still needs to be appended
                 else:
                     op_stack.append(x)
             else:  # if not op_stack
@@ -172,7 +175,7 @@ def postfix_algorigm(str_expression) -> str:
     return " ".join(postfix)
 
 
-def postfix_computation(postfix_expression) -> int:
+def postfix_computation(postfix_expression: dict(description="A expression_string expression in postfix format", type=str)) -> int:
     calculated_expression = deque()
     for x in postfix_expression.split(" "):
         if x.isdigit():
@@ -204,15 +207,16 @@ def postfix_computation(postfix_expression) -> int:
 def main():
     variables = dict()
     while True:
-        arguments_str = input().strip()  # removing all extra spaces on both sides of input
-        if not arguments_str:
+        user_input = input().strip()  # removing all extra spaces on both sides of input
+        if not user_input:
             continue
-        elif arguments_str.startswith("/"):
-            handle_command(arguments_str)
+        elif user_input.startswith("/"):
+            handle_command(user_input)
+        elif is_invalid_expression(user_input):
+            print("Invalid expression")
         else:
-            expression = transform_into_expression(arguments_str, variables)
+            expression = transform_into_expression(user_input, variables)
             if expression:
-                expression = space_delimited_format(expression)
                 postfix_format = postfix_algorigm(expression)
                 result = postfix_computation(postfix_format)
                 print(result)
@@ -220,3 +224,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    """annotations implemented: example of usage:
+    print(handle_command.__annotations__) """
