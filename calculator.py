@@ -9,7 +9,10 @@ def handle_command(command: "special command'/help' or '/exit' "):
         print("Bye!")
         exit()
     elif command == "/help":
-        print("The program calculates a given expression, acceptable operations: '+', '-', '/', '*' ")
+        print("""The program calculates a given expression.\nAcceptable math operations: '+', '-', '/', '*', '^'
+Additional functionality: you can use braces'( )' and variables. 
+Variables are case-sensetive, 'a' and 'A' is not the same, and can contain only latin letters.
+To assign a variable use the syntax like: a = 1 """)
     else:
         print("Unknown command")
 
