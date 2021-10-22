@@ -46,6 +46,10 @@ def space_delimited_format(expression: str) -> str:
 
 
 def repetitive_signs_amendment(expression_string) -> str:
+    if re.search(r"\+-", expression_string):
+        expression_string = re.sub(r"\+-", "-", expression_string)
+    if re.search(r"-\+", expression_string):
+        expression_string = re.sub(r"-\+", "-", expression_string)
     if re.search(r"\+{2,}", expression_string):
         expression_string = re.sub(r"\+{2,}", "+", expression_string)
         # replacing all minuse sequences with + or - based on their meaning
@@ -54,6 +58,9 @@ def repetitive_signs_amendment(expression_string) -> str:
             expression_string = re.sub(r"-{2,}", "+", expression_string)
         else:
             expression_string = re.sub(r"-{2,}", "-", expression_string)
+    if re.search(r"\s+", expression_string):
+        expression_string = re.sub(r"\s+", " ", expression_string)
+
     return expression_string
 
 
@@ -78,8 +85,10 @@ def transform_into_expression(expression_string: str, variables: "empty dict to 
 
     if re.search(r"[a-z]+", expression_string, flags=re.IGNORECASE):
         return handle_variables(expression_string, variables)
+
+
     # numeric expression case
-    elif re.search(r"\A[-+]?((\d+\s*[+-/*^)(\s]+\s*)*\d*)*", expression_string):
+    elif re.search(r"\A[-+]?((\w+\s*[+-/*^)(\s]+\s*)*\w*)*", expression_string):
         if braces_balance(expression_string):
             expression_string = repetitive_signs_amendment(expression_string)
             expression_string = space_delimited_format(expression_string)
@@ -236,7 +245,3 @@ if __name__ == '__main__':
     main()
     """annotations implemented: example of usage:
     print(handle_command.__annotations__) """
-
-
-# bug to fix:
-# expressions like a ++++ b doesn't work if they are with vars
