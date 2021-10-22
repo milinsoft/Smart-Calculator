@@ -18,12 +18,11 @@ To assign a variable use the syntax like: a = 1 """)
 
 
 # done
-def is_invalid_expression(expression_expression_string: str) -> bool:
-    if any([expression_expression_string[-1] in {"+", "-", "/", "*"}, "**" in expression_expression_string, "//" in expression_expression_string]):
+def is_invalid_expression(expression_string: str) -> bool:
+    if any([expression_string[-1] in {"+", "-", "/", "*"}, "**" in expression_string, "//" in expression_string]):
         return True
-    for x in expression_expression_string:
-        if not re.match(r"[\w^\+\-/\*= \(\)]", x):
-            return True
+    if re.search(r"[^\w^\+\-/\*= \(\)]", expression_string):
+        return True
     return False
 
 
@@ -76,6 +75,7 @@ def braces_balance(expression_string) -> bool:
 
 def transform_into_expression(expression_string: str, variables: "empty dict to fill out, storing variables") -> str:
     # expression with variable(s) case
+
     if re.search(r"[a-z]+", expression_string, flags=re.IGNORECASE):
         return handle_variables(expression_string, variables)
     # numeric expression case
@@ -92,15 +92,15 @@ def transform_into_expression(expression_string: str, variables: "empty dict to 
 
 def handle_variables(user_input, variables: dict) -> str:
     expr_template = re.compile(r"\A[-+]?(\w+\s*[+-/*)(\s]+\s*)*")
-    # print variable's value
-    if re.match(r"\A\s*[a-z]+$", user_input, flags=re.IGNORECASE):
+    # assignment
+    if re.search(r"=", user_input):  # errors will be checked later
+        assign_variable(user_input, variables)
+       # print variable's value
+    elif re.match(r"\A\s*[a-z]+$", user_input, flags=re.IGNORECASE):
         if user_input in variables.keys():
             print(variables[user_input])
         else:
             print("Unknown variable")
-    # assignment
-    elif re.search(r"=", user_input):
-        assign_variable(user_input, variables)
     # replacing variables with their values:
     elif re.match(expr_template, user_input):
         expression_str = replace_var_with_value(user_input, variables)
@@ -236,3 +236,7 @@ if __name__ == '__main__':
     main()
     """annotations implemented: example of usage:
     print(handle_command.__annotations__) """
+
+
+# bug to fix:
+# expressions like a ++++ b doesn't work if they are with vars
