@@ -3,6 +3,13 @@ import operator
 
 from collections import deque
 
+class ErrorMessage():
+    @staticmethod
+    def UnknownVariableError():
+        print("Unknown variable")
+    @staticmethod
+    def InvalidExpressionError():
+        print("Invalid Expression")
 
 class Commands():
     @staticmethod
@@ -24,20 +31,20 @@ class MathExpression():
         self.expression = expression
 
     def compute_expression(self):
-        if re.match(r"\A[-+]?\d+$", self.expression):
+        if re.match(r"\A\s*[+-]?\d+$", self.expression):
             print(self.expression.lstrip("+"))
-        elif re.search(r"\A[-+]?((\d+\s*[+-/*^)(\s]+\s*)*\d*)*", self.expression):
+        elif re.search(r"\A[-\+]?((\d+\s*[+-/*^)(\s]+\s*)*\d*)*", self.expression):
             self.expression = self.postfix_from_infix()
             self.expression = self.postfix_computation()
             print(self.expression)
         else:
-            print("Invalid expression")
+            return ErrorMessage.InvalidExpressionError()
 
     def postfix_from_infix(self):
         """ add explanation"""
         priority = {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
         self.expression = self.expression.replace("(", "( ").replace(")", " )")
-        infix_tokens = self.expression.split(" ")
+        infix_tokens = self.expression.split()
         op_stack = deque()
         postfix = deque()
         for x in infix_tokens:
@@ -68,7 +75,7 @@ class MathExpression():
     def postfix_computation(self: dict(description="A expression_string expression in postfix format", type=str)) -> int:
         ops = {"+": operator.add, "-": operator.sub, "*": operator.mul, "/": operator.truediv, "^": operator.xor}
         calculated_expression = deque()
-        for x in self.expression.split(" "):
+        for x in self.expression.split():
             if x.isdigit():
                 calculated_expression.append(x)
             elif x in ops:
@@ -82,7 +89,6 @@ class MathExpression():
         return calculated_expression[-1]
 
 class SmartCalculator(MathExpression):
-
     """ calculator reads the expression validates and evaluates it"""
 
     def is_valid_expression(self):
@@ -119,7 +125,7 @@ class SmartCalculator(MathExpression):
             ops = {"+": " + ", "-": " - ", "/": " / ", "*": " * ", ")": " )", "^": " ^ ", "  ": " "}
             for x in self.expression:
                 if x in ops:
-                    self.expression = self.expression.replace(x, ops[x], 1)
+                    self.expression = self.expression[0] + self.expression[1::].replace(x, ops[x])  # this allows to fix bugs while inputing "+1 /-1"
 
         convert_duplicate_chars(self)
         divide_by_space(self)
@@ -130,7 +136,7 @@ class SmartCalculator(MathExpression):
             math_expression = ExpWithVariables(self.expression)
             return math_expression.compute_expression()
         else:
-            print("Invalid Expression")
+            return ErrorMessage.InvalidExpressionError()
 
 
 class ExpWithVariables(MathExpression):
@@ -142,30 +148,26 @@ class ExpWithVariables(MathExpression):
     def compute_expression(self):
         if self.is_assignment_expression():
             return self.assign_variable()
-        elif re.match(r"\A[a-z]+$", self.expression, flags=re.IGNORECASE):
+        elif re.match(r"\A[-\+]?[a-z]+$", self.expression, flags=re.IGNORECASE):
             return self.output_variable_value()
         elif re.search(r"[a-z]", self.expression, flags=re.I):
             self.expression = self.replace_var_with_value()
         super().compute_expression()
 
     def output_variable_value(self):
-        # consider replacing with default values
-        if self.expression in self.variables.keys():
-            print(self.variables[self.expression])
-        else:
-            print("Unknown variable")
+        print(self.variables[self.expression] if self.expression in self.variables.keys() else "Unknown variable")
+
 
     # replacing vars with their values:
     def replace_var_with_value(self) -> str:
         var_list = re.findall(r"[a-z]+", self.expression, flags=re.IGNORECASE)
-        arguments_lst = self.expression.split(" ")
+        arguments_lst = self.expression.split()
         for i in range(int(len(arguments_lst))):
             if arguments_lst[i] in var_list and arguments_lst[i].isalpha():
                 try:
                     arguments_lst[i] = str(self.variables[arguments_lst[i]])
-                except:
-                    print("Unknown variable")
-                    break
+                except KeyError:
+                    return ErrorMessage.UnknownVariableError()
         return " ".join(arguments_lst)
 
 
@@ -194,12 +196,9 @@ def main():
             continue
         elif user_input[0] == "/":
             Commands.handle_command(user_input)
-        elif re.match(r"\A[-\+]?\d+$", user_input):
-            print(user_input.lstrip("+"))
         else:
             expression = SmartCalculator(user_input)
             expression.line_scanner()
-
 
 if __name__ == '__main__':
     main()
