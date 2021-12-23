@@ -108,7 +108,7 @@ class SmartCalculator(MathExpression):
     def expression_formatter(self):
         def convert_duplicate_chars():
             self.expression = re.sub(r"(\+-)|(-\+)", "-", self.expression)
-            if re.search(r"\d\s*\(", self.expression):  # special case for expressions like a(b+c)...
+            if re.search(r"\w\s*\(", self.expression):  # special case for expressions like a(b+c)...
                 self.expression = re.sub(r"\(", r"* (", self.expression)
             self.expression = re.sub(r"\+{2,}", "+", self.expression)
             # replacing all minuse sequences with + or - based on their meaning
