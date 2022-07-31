@@ -66,7 +66,7 @@ class MathExpression:
         self.expression = " ".join(postfix)
 
     def postfix_computation(self):
-        ops = {"+": operator.add, "-": operator.sub, "*": operator.mul, "/": operator.truediv, "^": operator.xor}
+        ops = {"+": operator.add, "-": operator.sub, "*": operator.mul, "/": operator.truediv, "^": operator.pow}
         calculated_expression = deque()
         for x in self.expression.split():
             if x.isdigit():
