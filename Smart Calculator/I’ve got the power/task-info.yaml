@@ -7,9 +7,15 @@ files:
 - name: calculator/calculator.py
   visible: true
   learner_created: true
+- name: calculator/validators.py
+  visible: true
+  learner_created: true
+- name: calculator/special_commands.py
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/learn/step/6596#comment
 status: Solved
 feedback:
   message: Congratulations!
-  time: Sun, 31 Jul 2022 09:20:09 UTC
+  time: Sun, 31 Jul 2022 12:24:33 UTC
 record: 7
