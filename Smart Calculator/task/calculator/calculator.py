@@ -9,20 +9,30 @@ from special_commands import SpecialCommand
 class SmartCalculator(MathExpression):
     variables = dict()
 
-    def _is_assignment(self):
-        return re.search(r"=", self.expression)
+    def _is_assignment(self) -> bool:
+        return bool(re.search(r"=", self.expression))
+
+    def _process_variables(self) -> str | None:
+        if self._is_assignment():
+            self._assign_variable()
+            return main()
+        else:
+            # replacing variables with its values *if any
+            self.expression: str = self._replace_var_with_value()
+
+    def _format_result(self, result) -> float | int:
+        if self.is_float_without_decimal_part(result):
+            result: float = int(result)  # converting results like (-)x.00 to x
+        else:
+            result: int = round(result, 2)  # fixing cases like 0.3 + 0.6
+        return result
 
     def compute_expression(self):
         if self.is_valid_expression():
 
             expr = MathExpressionFormatter(self.expression)
-            self.expression = expr.get_formatted_expression()
-
-            if self._is_assignment():
-                return self._assign_variable()
-            else:
-                # replacing variables with its values *if any
-                self.expression = self._replace_var_with_value()
+            self.expression: str = expr.get_formatted_expression()
+            self._process_variables()
 
             if re.match(r"\A\s*[+-]?\d+$", self.expression):
                 print(self.expression.lstrip("+"))  # strip head plus *if any, but leaving minus
@@ -35,7 +45,6 @@ class SmartCalculator(MathExpression):
                 print("Invalid Expression")
         else:
             print("Invalid Expression")
-
 
     def _assign_variable(self):
         var_ass_template = re.compile(r"\A\s*[a-z]+\s*=\s*([a-z]+|[\d\.]+)\s*$", flags=re.IGNORECASE)
@@ -53,7 +62,7 @@ class SmartCalculator(MathExpression):
         else:
             print("Invalid assignment")
 
-    def _postfix_from_infix(self):
+    def _postfix_from_infix(self) -> str:
         """ add explanation"""
         priority = {"+": 1, "-": 1, "*": 2, "/": 2, "^": 3}
         self.expression = self.expression.replace("(", "( ").replace(")", " )")
@@ -83,8 +92,9 @@ class SmartCalculator(MathExpression):
         while op_stack:
             postfix.append(op_stack.pop())
         self.expression = " ".join(postfix)
+        return self.expression
 
-    def _postfix_computation(self):
+    def _postfix_computation(self) -> float | int | None:
         ops = {"+": operator.add, "-": operator.sub, "*": operator.mul, "/": operator.truediv, "^": operator.pow}
         calculated_expression = deque()
 
@@ -102,15 +112,10 @@ class SmartCalculator(MathExpression):
                     return main()
 
         result = float(calculated_expression[-1])  # the only remaining element in array
-
-        if self.is_float_without_decimal_part(result):
-            result: float = int(result)  # converting results like (-)x.00 to x
-        else:
-            result = round(result, 2)  # fixing cases like 0.3 + 0.6
-        return result
+        return self._format_result(result)
 
     # replacing vars with their values:
-    def _replace_var_with_value(self):
+    def _replace_var_with_value(self) -> str | None:
         var_list = re.findall(r"[a-z]+", self.expression, flags=re.IGNORECASE)
         arguments_lst = self.expression.split()
         for i in range(int(len(arguments_lst))):
@@ -120,15 +125,15 @@ class SmartCalculator(MathExpression):
                 except KeyError:
                     print("Unknown variable")
                     return main()
-
-        return " ".join(arguments_lst)
+        self.expression: str = " ".join(arguments_lst)
+        return self.expression
 
 
 class UserInputProcessor:
 
     @staticmethod
     def process_input(user_input):
-        user_input = user_input.strip()
+        user_input: str = user_input.strip()
 
         if not user_input:
             return True  # exit function
