@@ -15,6 +15,8 @@
 
 # AWS User-specific
 .idea/**/aws.xml
+Smart*Calculator/task/calculator/__pycache__/
+
 
 # Generated files
 .idea/**/contentModel.xml
