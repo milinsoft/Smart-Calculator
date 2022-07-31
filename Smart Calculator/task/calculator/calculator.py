@@ -94,14 +94,7 @@ class SmartCalculator(MathExpression):
                         re.search(r"[^\w^+-/*= ()\s+]", self.expression)])
 
         def has_braces_imbalance():
-            if any(["(" in self.expression, ")" in self.expression]):
-                braces = 0
-                for symbol in self.expression:
-                    if symbol == "(":
-                        braces += 1
-                    elif symbol == ")":
-                        braces -= 1
-                return braces != 0
+            return self.expression.count('(') != self.expression.count(')')
 
         return not any([has_invalid_symbols(), has_braces_imbalance()])
 
